@@ -92,6 +92,7 @@ projects.each { projectName ->
         def jar = project(":${appendixName.uncapitalize()}").jar
         dependsOn jar
         inputs.file(project.file("src/changes/changes-since-${releasedVersions.mostRecentFinalRelease}.txt"))
+        inputs.file(jar.archivePath) // this shouldn't be necessary, something to debug on the plugin!
         oldClasspath = baselineConf
         newClasspath = files(jar.archivePath)
         onlyModified = true
