@@ -51,9 +51,10 @@ configurations {
 def ARTIFACT_TYPE = Attribute.of('artifactType', String)
 Set publicProjects = pluginProjects + implementationPluginProjects + publicGroovyProjects - [project(':smokeTest'), project(':soak')]
 def projects = publicProjects.collect { it.archivesBaseName - 'gradle-' }
+def baselineVersion = project.findProperty('baselineVersion')?:releasedVersions.mostRecentFinalRelease
 
 dependencies {
-    baseline "gradle:gradle:${releasedVersions.mostRecentFinalRelease}@zip"
+    baseline "gradle:gradle:${baselineVersion}@zip"
 
     // This transform takes the Gradle zip distribution,
     // and unzips the Gradle jar files that it contains in a directory
@@ -76,41 +77,44 @@ dependencies {
     }
 }
 
-task checkBinaryCompatibility {}
-check.dependsOn(checkBinaryCompatibility)
-
-def acceptedViolations = loadBreakingChanges(project, releasedVersions.mostRecentFinalRelease)
-
+def acceptedViolations = loadBreakingChanges(project, baselineVersion)
+def baselineConfigurations = []
 projects.each { projectName ->
     def appendixName = projectName.split('-')*.capitalize().join('')
-    def baselineConf = configurations.create("japicmp-baseline-${appendixName}") {
+    baselineConfigurations << configurations.create("japicmp-baseline-${appendixName}") {
         extendsFrom configurations.baseline
         attributes.attribute(ARTIFACT_TYPE, projectName)
     }
-
-    def t = task "japicmp${appendixName}"(type: JapicmpTask) {
-        def jar = project(":${appendixName.uncapitalize()}").jar
-        dependsOn jar
-        inputs.file(project.file("src/changes/changes-since-${releasedVersions.mostRecentFinalRelease}.txt"))
-        inputs.file(jar.archivePath) // this shouldn't be necessary, something to debug on the plugin!
-        oldClasspath = baselineConf
-        newClasspath = files(jar.archivePath)
-        onlyModified = true
-        failOnModification = false // we rely on the custom report to fail or not
-        ignoreMissingClasses = true // each jar is tested independently, but may reference inexisting classes
-        richReport {
-            title = "Binary compatibility report for $projectName"
-            destinationDir = file("$buildDir/reports/binary-compatibility")
-            reportName = "${projectName}.html"
-            addRule(AcceptedRegressionRule, acceptedViolations)
-            addRule(JApiChangeStatus.NEW, IncubatingMissingRule)
-
-            includedClasses = toPatterns(publicApiIncludes)
-            excludedClasses = toPatterns(publicApiExcludes)
-        }
-    }
-    checkBinaryCompatibility.dependsOn(t)
 }
+
+task checkBinaryCompatibility(type: JapicmpTask) {
+    dependsOn publicProjects.jar
+    inputs.files(publicProjects.jar.archivePath) // this shouldn't be necessary, something to debug on the plugin!
+    inputs.file(project.file("src/changes/changes-since-${baselineVersion}.txt"))
+    inputs.property("baseline.version", baselineVersion)
+
+    // we're going to do an artifact based comparison, not classpath based
+    oldClasspath = files()
+    newClasspath = files()
+    oldArchives = files(baselineConfigurations)
+    newArchives = files(publicProjects.jar)
+
+    // binary breaking change checking setup
+    onlyModified = true
+    failOnModification = false // we rely on the custom report to fail or not
+    ignoreMissingClasses = true // we do artifact comparison, not classpath, so we don't bother with external classes
+    richReport {
+        title = "Binary compatibility report for Gradle ${version} since ${baselineVersion}"
+        destinationDir = file("$buildDir/reports/binary-compatibility")
+        reportName = "report.html"
+        addRule(AcceptedRegressionRule, acceptedViolations)
+        addRule(JApiChangeStatus.NEW, IncubatingMissingRule)
+
+        includedClasses = toPatterns(publicApiIncludes)
+        excludedClasses = toPatterns(publicApiExcludes)
+    }
+}
+check.dependsOn(checkBinaryCompatibility)
 
 static List<String> toPatterns(List<String> packages) {
     def patterns = packages.collect {
