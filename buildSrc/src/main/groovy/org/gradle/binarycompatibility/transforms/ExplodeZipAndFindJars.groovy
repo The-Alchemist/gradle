@@ -22,6 +22,7 @@ import org.gradle.api.artifacts.transform.ArtifactTransform
 
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import java.nio.file.Files
 
 @CompileStatic
 class ExplodeZipAndFindJars extends ArtifactTransform {
@@ -30,6 +31,12 @@ class ExplodeZipAndFindJars extends ArtifactTransform {
     List<File> transform(final File file) {
         List<File> result = []
         if (outputDirectory.exists() && outputDirectory.listFiles().length == 0) {
+            File gradleJars = new File(outputDirectory, "gradle-jars")
+            File dependencies = new File(outputDirectory, "gradle-dependencies")
+            gradleJars.mkdir()
+            dependencies.mkdir()
+            result << gradleJars
+            result << dependencies
             ZipInputStream zin = new ZipInputStream(file.newInputStream())
             ZipEntry zipEntry
             while (zipEntry = zin.nextEntry) {
@@ -37,19 +44,11 @@ class ExplodeZipAndFindJars extends ArtifactTransform {
                 if (shortName.contains('/')) {
                     shortName = shortName.substring(shortName.lastIndexOf('/') + 1)
                 }
-                if (shortName.startsWith('gradle-') && shortName.endsWith('.jar')) {
-                    def out = new File(outputDirectory, shortName)
-
-                    out.withOutputStream { os ->
-                        byte[] buffer = new byte[2048]
-                        int n
-                        while ((n = zin.read(buffer, 0, 2048)) > -1) {
-                            os.write(buffer, 0, n)
-                        }
-
-                    }
+                if (shortName.endsWith('.jar')) {
+                    def outputDir = shortName.startsWith('gradle-') ? gradleJars : dependencies
+                    def out = new File(outputDir, shortName)
+                    Files.copy(zin, out.toPath())
                     zin.closeEntry()
-                    result << out
                 }
             }
         }

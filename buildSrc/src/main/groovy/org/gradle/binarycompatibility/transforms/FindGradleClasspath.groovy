@@ -22,18 +22,16 @@ import javax.inject.Inject
 import groovy.transform.CompileStatic
 
 @CompileStatic
-class FindGradleJar extends ArtifactTransform {
-    private final String target
+class FindGradleClasspath extends ArtifactTransform {
 
     @Inject
-    FindGradleJar(String target) {
-        this.target = target
+    FindGradleClasspath() {
     }
 
     @Override
     List<File> transform(final File file) {
-        if (file.name == 'gradle-jars') {
-            file.listFiles().findAll { it.name.startsWith("gradle-${target}-") } as List<File>
+        if (file.name == 'gradle-dependencies') {
+            file.listFiles() as List<File>
         } else {
             []
         }

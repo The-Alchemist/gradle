@@ -44,11 +44,16 @@ repositories {
     }
 }
 
+def ARTIFACT_TYPE = Attribute.of('artifactType', String)
+
 configurations {
     baseline
+    baselineClasspath {
+        extendsFrom baseline
+        attributes.attribute(ARTIFACT_TYPE, 'gradle-classpath')
+    }
 }
 
-def ARTIFACT_TYPE = Attribute.of('artifactType', String)
 Set publicProjects = pluginProjects + implementationPluginProjects + publicGroovyProjects - [project(':smokeTest'), project(':soak')]
 def projects = publicProjects.collect { it.archivesBaseName - 'gradle-' }
 def baselineVersion = project.findProperty('baselineVersion')?:releasedVersions.mostRecentFinalRelease
@@ -62,6 +67,11 @@ dependencies {
         from.attribute(ARTIFACT_TYPE, 'zip')
         to.attribute(ARTIFACT_TYPE, 'gradle-libs-dir')
         artifactTransform(ExplodeZipAndFindJars)
+    }
+    registerTransform {
+        from.attribute(ARTIFACT_TYPE, 'gradle-libs-dir')
+        to.attribute(ARTIFACT_TYPE, 'gradle-classpath')
+        artifactTransform(FindGradleClasspath)
     }
 
     projects.each { projectName ->
@@ -92,17 +102,19 @@ task checkBinaryCompatibility(type: JapicmpTask) {
     inputs.files(publicProjects.jar.archivePath) // this shouldn't be necessary, something to debug on the plugin!
     inputs.file(project.file("src/changes/changes-since-${baselineVersion}.txt"))
     inputs.property("baseline.version", baselineVersion)
+    inputs.files(publicProjects.configurations.runtimeClasspath)
 
-    // we're going to do an artifact based comparison, not classpath based
-    oldClasspath = files()
-    newClasspath = files()
+    oldClasspath = configurations.baselineClasspath
+    newClasspath = files( {
+        publicProjects.configurations.runtimeClasspath
+    })
     oldArchives = files(baselineConfigurations)
     newArchives = files(publicProjects.jar)
 
     // binary breaking change checking setup
     onlyModified = true
     failOnModification = false // we rely on the custom report to fail or not
-    ignoreMissingClasses = true // we do artifact comparison, not classpath, so we don't bother with external classes
+    ignoreMissingClasses = true // because of a missing scala.runtime.AbstractFunction0 class
     richReport {
         title = "Binary compatibility report for Gradle ${version} since ${baselineVersion}"
         destinationDir = file("$buildDir/reports/binary-compatibility")
