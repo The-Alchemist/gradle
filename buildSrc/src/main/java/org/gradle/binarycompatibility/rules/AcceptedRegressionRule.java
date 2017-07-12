@@ -19,6 +19,7 @@ package org.gradle.binarycompatibility.rules;
 import japicmp.model.*;
 import me.champeau.gradle.japicmp.report.Violation;
 import java.util.Map;
+import java.util.Set;
 
 public class AcceptedRegressionRule extends WithIncubatingCheck {
     private final Map<String, String> acceptedViolations;
@@ -28,14 +29,17 @@ public class AcceptedRegressionRule extends WithIncubatingCheck {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Violation maybeViolation(final JApiCompatibility member) {
         if (!member.isBinaryCompatible()) {
+            Set<String> seenRegressions = (Set<String>) getContext().getUserData().get("seenRegressions");
             String describe = Violation.describe(member);
             String acceptation = acceptedViolations.get(describe);
             if (acceptation == null) {
                 for (String key: acceptedViolations.keySet()) {
                     if (describe.startsWith(key)) {
                         acceptation = acceptedViolations.get(key);
+                        seenRegressions.add(key);
                     }
                 }
                 if (acceptation == null) {
@@ -45,6 +49,8 @@ public class AcceptedRegressionRule extends WithIncubatingCheck {
                         }
                     }
                 }
+            } else {
+                seenRegressions.add(describe);
             }
             if (acceptation != null) {
                 return Violation.accept(member, acceptation);

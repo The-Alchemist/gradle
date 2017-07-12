@@ -20,7 +20,7 @@ import me.champeau.gradle.japicmp.report.*;
 import japicmp.model.*;
 import java.util.List;
 
-public abstract class WithIncubatingCheck implements ViolationRule {
+public abstract class WithIncubatingCheck extends AbstractContextAwareViolationRule {
     private boolean isAnnotatedWithIncubating(JApiHasAnnotations member) {
         for (JApiAnnotation annotation : member.getAnnotations()) {
             if ("org.gradle.api.Incubating".equals(annotation.getFullyQualifiedName())) {

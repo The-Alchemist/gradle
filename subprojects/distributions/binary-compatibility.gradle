@@ -29,7 +29,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'me.champeau.gradle:japicmp-gradle-plugin:0.2.1'
+        classpath 'me.champeau.gradle:japicmp-gradle-plugin:0.2.2'
     }
 }
 
@@ -109,6 +109,8 @@ task checkBinaryCompatibility(type: JapicmpTask) {
         reportName = "report.html"
         addRule(AcceptedRegressionRule, acceptedViolations)
         addRule(JApiChangeStatus.NEW, IncubatingMissingRule)
+        addSetupRule(AcceptedRegressionsRuleSetup, acceptedViolations)
+        addPostProcessRule(AcceptedRegressionsRulePostProcess)
 
         includedClasses = toPatterns(publicApiIncludes)
         excludedClasses = toPatterns(publicApiExcludes)
