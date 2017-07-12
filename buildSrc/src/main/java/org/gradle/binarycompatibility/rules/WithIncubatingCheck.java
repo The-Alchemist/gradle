@@ -18,6 +18,7 @@ package org.gradle.binarycompatibility.rules;
 
 import me.champeau.gradle.japicmp.report.*;
 import japicmp.model.*;
+import java.util.List;
 
 public abstract class WithIncubatingCheck implements ViolationRule {
     private boolean isAnnotatedWithIncubating(JApiHasAnnotations member) {
@@ -30,6 +31,11 @@ public abstract class WithIncubatingCheck implements ViolationRule {
     }
 
     boolean isIncubating(JApiHasAnnotations member) {
+        if (member instanceof JApiClass) {
+            return isIncubating((JApiClass)member);
+        } else if (member instanceof JApiMethod) {
+            return isIncubating((JApiMethod)member);
+        }
         return isAnnotatedWithIncubating(member);
     }
 
@@ -37,11 +43,20 @@ public abstract class WithIncubatingCheck implements ViolationRule {
         if (isAnnotatedWithIncubating(clazz)) {
             return true;
         }
-        for (JApiMethod method: clazz.getMethods()) {
-            if (isIncubating(method)) {
-                return true;
+        // all the methods need to be incubating
+        List<JApiMethod> methods = clazz.getMethods();
+        if (methods.isEmpty()) {
+            return false;
+        }
+        for (JApiMethod method : methods) {
+            if (!isIncubating(method)) {
+                return false;
             }
         }
-        return false;
+        return true;
+    }
+
+    boolean isIncubating(JApiMethod method) {
+        return isAnnotatedWithIncubating(method) || isAnnotatedWithIncubating(method.getjApiClass());
     }
 }
