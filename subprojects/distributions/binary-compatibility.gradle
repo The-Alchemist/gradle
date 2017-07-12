@@ -102,12 +102,9 @@ task checkBinaryCompatibility(type: JapicmpTask) {
     inputs.files(publicProjects.jar.archivePath) // this shouldn't be necessary, something to debug on the plugin!
     inputs.file(project.file("src/changes/changes-since-${baselineVersion}.txt"))
     inputs.property("baseline.version", baselineVersion)
-    inputs.files(publicProjects.configurations.runtimeClasspath)
 
     oldClasspath = configurations.baselineClasspath
-    newClasspath = files( {
-        publicProjects.configurations.runtimeClasspath
-    })
+    newClasspath = files(publicProjects.configurations.runtimeClasspath)
     oldArchives = files(baselineConfigurations)
     newArchives = files(publicProjects.jar)
 
