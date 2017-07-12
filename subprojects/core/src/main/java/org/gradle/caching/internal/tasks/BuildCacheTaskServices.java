@@ -20,8 +20,8 @@ import org.gradle.BuildResult;
 import org.gradle.api.Action;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.InstantiatorFactory;
-import org.gradle.api.internal.file.TemporaryFileProvider;
 import org.gradle.caching.configuration.internal.BuildCacheConfigurationInternal;
+import org.gradle.caching.internal.BuildCacheTempFileStore;
 import org.gradle.caching.internal.controller.BuildCacheController;
 import org.gradle.caching.internal.controller.BuildCacheControllerFactory;
 import org.gradle.caching.internal.tasks.origin.TaskOutputOriginFactory;
@@ -74,7 +74,7 @@ public class BuildCacheTaskServices {
         ServiceRegistry serviceRegistry,
         BuildCacheConfigurationInternal buildCacheConfiguration,
         BuildOperationExecutor buildOperationExecutor,
-        TemporaryFileProvider temporaryFileProvider,
+        BuildCacheTempFileStore tempFileStore,
         InstantiatorFactory instantiatorFactory,
         GradleInternal gradle
     ) {
@@ -82,7 +82,7 @@ public class BuildCacheTaskServices {
             buildOperationExecutor,
             gradle,
             buildCacheConfiguration,
-            temporaryFileProvider,
+            tempFileStore,
             instantiatorFactory.inject(serviceRegistry)
         );
 

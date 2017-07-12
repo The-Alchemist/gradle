@@ -14,28 +14,32 @@
  * limitations under the License.
  */
 
-package org.gradle.caching.internal.controller.operations;
+package org.gradle.caching.internal.controller.service;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.gradle.api.Action;
+import org.gradle.api.Nullable;
 import org.gradle.caching.BuildCacheKey;
-import org.gradle.caching.internal.operations.BuildCacheRemoteStoreBuildOperationType;
+import org.gradle.caching.local.internal.LocalBuildCacheService;
 
-public class StoreOperationDetails implements BuildCacheRemoteStoreBuildOperationType.Details {
+import java.io.Closeable;
+import java.io.File;
 
-    private final BuildCacheKey cacheKey;
-    private final long archiveSize;
+public interface LocalBuildCacheServiceHandle extends Closeable {
 
-    public StoreOperationDetails(BuildCacheKey cacheKey, long archiveSize) {
-        this.cacheKey = cacheKey;
-        this.archiveSize = archiveSize;
-    }
+    @Nullable
+    @VisibleForTesting
+    LocalBuildCacheService getService();
+
+    boolean canLoad();
+
+    void load(BuildCacheKey key, Action<? super File> reader);
+
+    boolean canStore();
+
+    void store(BuildCacheKey key, File file);
 
     @Override
-    public String getCacheKey() {
-        return cacheKey.getHashCode();
-    }
+    void close();
 
-    @Override
-    public long getArchiveSize() {
-        return archiveSize;
-    }
 }

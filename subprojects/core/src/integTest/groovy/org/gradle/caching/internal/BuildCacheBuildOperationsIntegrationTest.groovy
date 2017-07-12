@@ -17,6 +17,9 @@
 package org.gradle.caching.internal
 
 import org.gradle.caching.BuildCacheException
+import org.gradle.caching.internal.operations.BuildCacheDisableServiceBuildOperationType
+import org.gradle.caching.internal.operations.BuildCacheRemoteLoadBuildOperationType
+import org.gradle.caching.internal.operations.BuildCacheRemoteStoreBuildOperationType
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.integtests.fixtures.BuildOperationsFixture
 import org.gradle.integtests.fixtures.DirectoryBuildCacheFixture
@@ -113,12 +116,12 @@ class BuildCacheBuildOperationsIntegrationTest extends AbstractIntegrationSpec i
         succeeds("t")
 
         then:
-        def missLoadOp = operations.only(BuildCacheLoadBuildOperationType)
+        def missLoadOp = operations.only(BuildCacheRemoteLoadBuildOperationType)
         missLoadOp.details.cacheKey != null
         missLoadOp.details.role == "local"
         missLoadOp.result.hit == false
 
-        def storeOp = operations.only(BuildCacheStoreBuildOperationType)
+        def storeOp = operations.only(BuildCacheRemoteStoreBuildOperationType)
         storeOp.details.cacheKey == missLoadOp.details.cacheKey
         storeOp.details.role == "local"
         storeOp.result.archiveSize == localCacheArtifact(storeOp.details.cacheKey.toString()).length()
@@ -130,7 +133,7 @@ class BuildCacheBuildOperationsIntegrationTest extends AbstractIntegrationSpec i
         succeeds("clean", "t")
 
         then:
-        def hitLoadOp = operations.only(BuildCacheLoadBuildOperationType)
+        def hitLoadOp = operations.only(BuildCacheRemoteLoadBuildOperationType)
         hitLoadOp.details.cacheKey == storeOp.details.cacheKey
         hitLoadOp.details.role == "local"
 
@@ -142,7 +145,7 @@ class BuildCacheBuildOperationsIntegrationTest extends AbstractIntegrationSpec i
         sizeDiff > -100 && sizeDiff < 100
 
         hitLoadOp.result.archiveEntryCount == 4
-        operations.none(BuildCacheStoreBuildOperationType)
+        operations.none(BuildCacheRemoteStoreBuildOperationType)
     }
 
     def "records load failure"() {
@@ -164,7 +167,7 @@ class BuildCacheBuildOperationsIntegrationTest extends AbstractIntegrationSpec i
         }
 
         then:
-        def failedLoadOp = operations.only(BuildCacheLoadBuildOperationType)
+        def failedLoadOp = operations.only(BuildCacheRemoteLoadBuildOperationType)
         failedLoadOp.details.cacheKey != null
         failedLoadOp.details.role == "local"
         failedLoadOp.result == null
@@ -190,7 +193,7 @@ class BuildCacheBuildOperationsIntegrationTest extends AbstractIntegrationSpec i
         succeeds("t")
 
         then:
-        def failedLoadOp = operations.only(BuildCacheStoreBuildOperationType)
+        def failedLoadOp = operations.only(BuildCacheRemoteStoreBuildOperationType)
         failedLoadOp.details.cacheKey != null
         failedLoadOp.details.role == "local"
         failedLoadOp.result == null
@@ -221,16 +224,16 @@ class BuildCacheBuildOperationsIntegrationTest extends AbstractIntegrationSpec i
         succeeds("t")
 
         then:
-        def localMissLoadOp = operations.only(BuildCacheLoadBuildOperationType) {
+        def localMissLoadOp = operations.only(BuildCacheRemoteLoadBuildOperationType) {
             it.details.role == "local"
         }
-        def remoteMissLoadOp = operations.only(BuildCacheLoadBuildOperationType) {
+        def remoteMissLoadOp = operations.only(BuildCacheRemoteLoadBuildOperationType) {
             it.details.role == "remote"
         }
-        def localStoreOp = operations.only(BuildCacheStoreBuildOperationType) {
+        def localStoreOp = operations.only(BuildCacheRemoteStoreBuildOperationType) {
             it.details.role == "local"
         }
-        def remoteStoreOp = operations.only(BuildCacheStoreBuildOperationType) {
+        def remoteStoreOp = operations.only(BuildCacheRemoteStoreBuildOperationType) {
             it.details.role == "remote"
         }
 

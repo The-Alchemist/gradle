@@ -16,13 +16,18 @@
 
 package org.gradle.caching.internal.controller.operations;
 
-import org.gradle.caching.internal.operations.BuildCacheRemoteStoreBuildOperationType;
+import org.gradle.caching.internal.operations.BuildCacheArchiveUnpackBuildOperationType;
 
-public class StoreOperationResult implements BuildCacheRemoteStoreBuildOperationType.Result {
+public class UnpackOperationResult implements BuildCacheArchiveUnpackBuildOperationType.Result {
 
-    public static final BuildCacheRemoteStoreBuildOperationType.Result INSTANCE = new StoreOperationResult();
+    private final long archiveEntryCount;
 
-    private StoreOperationResult() {
+    public UnpackOperationResult(long archiveEntryCount) {
+        this.archiveEntryCount = archiveEntryCount;
     }
 
+    @Override
+    public long getArchiveEntryCount() {
+        return archiveEntryCount;
+    }
 }

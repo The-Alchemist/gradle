@@ -14,22 +14,29 @@
  * limitations under the License.
  */
 
-package org.gradle.caching.internal.controller;
+package org.gradle.caching.internal.controller.service;
 
-import org.gradle.internal.scan.UsedByScanPlugin;
+import com.google.common.annotations.VisibleForTesting;
+import org.gradle.api.Nullable;
+import org.gradle.caching.BuildCacheKey;
+import org.gradle.caching.BuildCacheService;
 
-@UsedByScanPlugin("values are expected (type is not linked), see BuildCacheStoreBuildOperationType and friends")
-public enum BuildCacheServiceRole {
-    LOCAL,
-    REMOTE;
+import java.io.Closeable;
 
-    private final String displayName;
+public interface BuildCacheServiceHandle extends Closeable {
 
-    BuildCacheServiceRole() {
-        this.displayName = name().toLowerCase();
-    }
+    @Nullable
+    @VisibleForTesting
+    BuildCacheService getService();
 
-    public String getDisplayName() {
-        return displayName;
-    }
+    boolean canLoad();
+
+    void load(BuildCacheKey key, LoadTarget loadTarget);
+
+    boolean canStore();
+
+    void store(BuildCacheKey key, StoreTarget storeTarget);
+
+    @Override
+    void close();
 }

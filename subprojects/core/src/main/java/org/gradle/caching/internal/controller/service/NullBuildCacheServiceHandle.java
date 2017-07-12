@@ -14,32 +14,45 @@
  * limitations under the License.
  */
 
-package org.gradle.caching.internal.controller;
+package org.gradle.caching.internal.controller.service;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.gradle.api.Nullable;
 import org.gradle.caching.BuildCacheKey;
 import org.gradle.caching.BuildCacheService;
 
-import java.io.Closeable;
-import java.io.File;
+public class NullBuildCacheServiceHandle implements BuildCacheServiceHandle {
 
-public interface BuildCacheServiceHandle extends Closeable {
+    public static final BuildCacheServiceHandle INSTANCE = new NullBuildCacheServiceHandle();
 
     @Nullable
-    @VisibleForTesting
-    BuildCacheService getService();
-
-    boolean canLoad();
-
-    <T> T doLoad(BuildCacheLoadCommand<T> command);
-
-    boolean canStore();
-
-    void doStore(BuildCacheStoreCommand command);
-
-    void doStore(BuildCacheKey key, File file, BuildCacheStoreCommand.Result storeResult);
+    @Override
+    public BuildCacheService getService() {
+        return null;
+    }
 
     @Override
-    void close();
+    public boolean canLoad() {
+        return false;
+    }
+
+    @Override
+    public void load(BuildCacheKey key, LoadTarget loadTarget) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean canStore() {
+        return false;
+    }
+
+    @Override
+    public void store(BuildCacheKey key, StoreTarget storeTarget) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void close() {
+
+    }
+
 }

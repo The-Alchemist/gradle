@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-package org.gradle.caching.internal.controller.operations;
+package org.gradle.caching.internal.controller.service;
 
-import org.gradle.caching.internal.operations.BuildCacheRemoteStoreBuildOperationType;
+import org.gradle.internal.scan.UsedByScanPlugin;
 
-public class StoreOperationResult implements BuildCacheRemoteStoreBuildOperationType.Result {
+@UsedByScanPlugin("values are expected (type is not linked), see BuildCacheStoreBuildOperationType and friends")
+public enum BuildCacheServiceRole {
+    LOCAL,
+    REMOTE;
 
-    public static final BuildCacheRemoteStoreBuildOperationType.Result INSTANCE = new StoreOperationResult();
+    private final String displayName;
 
-    private StoreOperationResult() {
+    BuildCacheServiceRole() {
+        this.displayName = name().toLowerCase();
     }
 
+    public String getDisplayName() {
+        return displayName;
+    }
 }

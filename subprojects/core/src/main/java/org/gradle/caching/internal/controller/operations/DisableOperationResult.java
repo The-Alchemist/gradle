@@ -16,7 +16,7 @@
 
 package org.gradle.caching.internal.controller.operations;
 
-import org.gradle.caching.internal.BuildCacheDisableServiceBuildOperationType;
+import org.gradle.caching.internal.operations.BuildCacheDisableServiceBuildOperationType;
 
 public class DisableOperationResult implements BuildCacheDisableServiceBuildOperationType.Result {
 

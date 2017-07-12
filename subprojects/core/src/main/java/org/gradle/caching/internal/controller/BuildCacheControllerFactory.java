@@ -23,7 +23,6 @@ import com.google.common.collect.Iterables;
 import org.gradle.StartParameter;
 import org.gradle.api.Nullable;
 import org.gradle.api.internal.GradleInternal;
-import org.gradle.api.internal.file.TemporaryFileProvider;
 import org.gradle.api.internal.tasks.GeneratedSubclasses;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -32,7 +31,11 @@ import org.gradle.caching.BuildCacheService;
 import org.gradle.caching.BuildCacheServiceFactory;
 import org.gradle.caching.configuration.BuildCache;
 import org.gradle.caching.configuration.internal.BuildCacheConfigurationInternal;
+import org.gradle.caching.internal.BuildCacheTempFileStore;
 import org.gradle.caching.internal.FinalizeBuildCacheConfigurationBuildOperationType;
+import org.gradle.caching.internal.controller.service.BuildCacheServiceRole;
+import org.gradle.caching.internal.controller.service.BuildCacheServicesConfiguration;
+import org.gradle.caching.local.internal.LocalBuildCacheService;
 import org.gradle.internal.Cast;
 import org.gradle.internal.operations.BuildOperationContext;
 import org.gradle.internal.operations.BuildOperationExecutor;
@@ -54,7 +57,7 @@ public final class BuildCacheControllerFactory {
         final BuildOperationExecutor buildOperationExecutor,
         final GradleInternal gradle,
         final BuildCacheConfigurationInternal buildCacheConfiguration,
-        final TemporaryFileProvider temporaryFileProvider,
+        final BuildCacheTempFileStore tempFileStore,
         final Instantiator instantiator
     ) {
         return buildOperationExecutor.call(new CallableBuildOperation<BuildCacheController>() {
@@ -108,7 +111,7 @@ public final class BuildCacheControllerFactory {
                     return new DefaultBuildCacheController(
                         toConfiguration(local, remote, localDescribedService, remoteDescribedService),
                         buildOperationExecutor,
-                        temporaryFileProvider,
+                        tempFileStore,
                         startParameter.getShowStacktrace() != ShowStacktrace.INTERNAL_EXCEPTIONS
                     );
                 }
@@ -123,12 +126,34 @@ public final class BuildCacheControllerFactory {
     }
 
     private static BuildCacheServicesConfiguration toConfiguration(BuildCache local, BuildCache remote, DescribedBuildCacheService localDescribedService, DescribedBuildCacheService remoteDescribedService) {
-        return new BuildCacheServicesConfiguration(
-            localDescribedService == null ? null : localDescribedService.service,
-            local != null && local.isPush(),
-            remoteDescribedService == null ? null : remoteDescribedService.service,
-            remote != null && remote.isPush()
-        );
+        if (localDescribedService == null) {
+            return new BuildCacheServicesConfiguration(
+                null,
+                false,
+                remoteDescribedService == null ? null : remoteDescribedService.service,
+                remote != null && remote.isPush(),
+                null,
+                false
+            );
+        } else if (localDescribedService.service instanceof LocalBuildCacheService) {
+            return new BuildCacheServicesConfiguration(
+                null,
+                false,
+                remoteDescribedService == null ? null : remoteDescribedService.service,
+                remote != null && remote.isPush(),
+                (LocalBuildCacheService) localDescribedService.service,
+                local.isPush()
+            );
+        } else {
+            return new BuildCacheServicesConfiguration(
+                localDescribedService.service,
+                local.isPush(),
+                remoteDescribedService == null ? null : remoteDescribedService.service,
+                remote != null && remote.isPush(),
+                null,
+                false
+            );
+        }
     }
 
 

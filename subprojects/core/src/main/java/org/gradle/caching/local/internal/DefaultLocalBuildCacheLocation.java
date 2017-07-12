@@ -14,21 +14,7 @@
  * limitations under the License.
  */
 
-package org.gradle.caching.internal.controller;
+package org.gradle.caching.local.internal;
 
-import org.gradle.caching.BuildCacheService;
-
-final class BuildCacheServicesConfiguration {
-
-    final BuildCacheService local;
-    final boolean localPush;
-    final BuildCacheService remote;
-    final boolean remotePush;
-
-    BuildCacheServicesConfiguration(BuildCacheService local, boolean localPush, BuildCacheService remote, boolean remotePush) {
-        this.local = local;
-        this.localPush = localPush;
-        this.remote = remote;
-        this.remotePush = remotePush;
-    }
+public class DefaultLocalBuildCacheLocation {
 }

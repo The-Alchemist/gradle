@@ -16,24 +16,16 @@
 
 package org.gradle.caching.internal.controller.operations;
 
-import org.gradle.caching.internal.BuildCacheDisableServiceBuildOperationType;
-import org.gradle.caching.internal.controller.BuildCacheServiceRole;
+import org.gradle.caching.internal.operations.BuildCacheDisableServiceBuildOperationType;
 
 public class DisableOperationDetails implements BuildCacheDisableServiceBuildOperationType.Details {
 
     private final String message;
-    private final BuildCacheServiceRole role;
     private final DisabledReason reason;
 
-    public DisableOperationDetails(BuildCacheServiceRole role, String message, DisabledReason reason) {
+    public DisableOperationDetails(String message, DisabledReason reason) {
         this.message = message;
-        this.role = role;
         this.reason = reason;
-    }
-
-    @Override
-    public String getRole() {
-        return role.getDisplayName();
     }
 
     @Override

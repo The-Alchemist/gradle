@@ -18,6 +18,7 @@ package org.gradle.caching.local.internal;
 
 import com.google.common.io.Closer;
 import org.apache.commons.io.FileUtils;
+import org.gradle.api.Action;
 import org.gradle.api.UncheckedIOException;
 import org.gradle.cache.CacheBuilder;
 import org.gradle.cache.CacheRepository;
@@ -43,7 +44,7 @@ import java.io.OutputStream;
 import static org.gradle.cache.internal.FileLockManager.LockMode.None;
 import static org.gradle.cache.internal.filelock.LockOptionsBuilder.mode;
 
-public class DirectoryBuildCacheService implements BuildCacheService {
+public class DirectoryBuildCacheService implements LocalBuildCacheService, BuildCacheService {
     private final PathKeyFileStore fileStore;
     private final PersistentCache persistentCache;
 
@@ -141,7 +142,33 @@ public class DirectoryBuildCacheService implements BuildCacheService {
     }
 
     @Override
-    public void close() throws IOException {
+    public void store(final BuildCacheKey key, final File file) {
+        persistentCache.useCache(new Runnable() {
+            @Override
+            public void run() {
+                fileStore.move(key.getHashCode(), file);
+            }
+        });
+    }
+
+    @Override
+    public void load(final BuildCacheKey key, final Action<? super File> reader) {
+        persistentCache.withFileLock(new Factory<Void>() {
+            @Override
+            public Void create() {
+                LocallyAvailableResource resource = fileStore.get(key.getHashCode());
+                if (resource != null) {
+                    File file = resource.getFile();
+                    GFileUtils.touch(file); // Mark as recently used
+                    reader.execute(file);
+                }
+                return null;
+            }
+        });
+    }
+
+    @Override
+    public void close() {
         persistentCache.close();
     }
 }

@@ -1,0 +1,53 @@
+/*
+ * Copyright 2017 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.gradle.caching.internal;
+
+import org.gradle.api.Action;
+import org.gradle.caching.BuildCacheKey;
+import org.gradle.util.GFileUtils;
+
+import java.io.File;
+import java.util.UUID;
+
+public class BuildCacheTempFileStore {
+
+    public final static String PATH = "build-cache-tmp";
+
+    private final File dir;
+
+    public static BuildCacheTempFileStore in(File parentDir) {
+        return new BuildCacheTempFileStore(new File(parentDir, PATH));
+    }
+
+    private BuildCacheTempFileStore(File dir) {
+        this.dir = dir;
+        GFileUtils.mkdirs(this.dir);
+    }
+
+    public void allocate(BuildCacheKey key, Action<? super File> action) {
+        String fileName = key.getHashCode() + "-" + UUID.randomUUID().toString();
+        File file = new File(dir, fileName);
+        try {
+            action.execute(file);
+        } finally {
+            if (file.exists()) {
+                GFileUtils.deleteQuietly(file);
+            }
+        }
+    }
+
+}

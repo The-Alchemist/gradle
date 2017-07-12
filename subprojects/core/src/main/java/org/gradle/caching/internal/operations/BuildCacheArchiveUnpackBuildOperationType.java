@@ -14,15 +14,30 @@
  * limitations under the License.
  */
 
-package org.gradle.caching.internal.controller.operations;
+package org.gradle.caching.internal.operations;
 
-import org.gradle.caching.internal.operations.BuildCacheRemoteStoreBuildOperationType;
+import org.gradle.internal.operations.BuildOperationType;
+import org.gradle.internal.scan.UsedByScanPlugin;
 
-public class StoreOperationResult implements BuildCacheRemoteStoreBuildOperationType.Result {
+public final class BuildCacheArchiveUnpackBuildOperationType implements BuildOperationType<BuildCacheArchiveUnpackBuildOperationType.Details, BuildCacheArchiveUnpackBuildOperationType.Result> {
 
-    public static final BuildCacheRemoteStoreBuildOperationType.Result INSTANCE = new StoreOperationResult();
+    @UsedByScanPlugin
+    public interface Details {
 
-    private StoreOperationResult() {
+        /**
+         * The cache key.
+         */
+        String getCacheKey();
+
+        long getArchiveSize();
+
+    }
+
+    @UsedByScanPlugin
+    public interface Result {
+
+        long getArchiveEntryCount();
+
     }
 
 }

@@ -22,24 +22,45 @@ import org.gradle.caching.configuration.internal.DefaultBuildCacheConfiguration;
 import org.gradle.caching.configuration.internal.DefaultBuildCacheServiceRegistration;
 import org.gradle.caching.local.DirectoryBuildCache;
 import org.gradle.caching.local.internal.DirectoryBuildCacheServiceFactory;
+import org.gradle.initialization.GradleUserHomeDirProvider;
 import org.gradle.internal.reflect.Instantiator;
+import org.gradle.internal.service.ServiceRegistration;
+import org.gradle.internal.service.scopes.AbstractPluginServiceRegistry;
 
+import java.io.File;
 import java.util.List;
 
 /**
  * Build scoped services for build cache usage.
  */
-public final class BuildCacheServices {
+public final class BuildCacheServices extends AbstractPluginServiceRegistry {
 
-    BuildCacheConfigurationInternal createBuildCacheConfiguration(
-        Instantiator instantiator,
-        List<BuildCacheServiceRegistration> allBuildCacheServiceFactories
-    ) {
-        return instantiator.newInstance(DefaultBuildCacheConfiguration.class, instantiator, allBuildCacheServiceFactories);
+    @Override
+    public void registerGradleUserHomeServices(ServiceRegistration registration) {
+        registration.addProvider(new Object() {
+            BuildCacheTempFileStore createBuildCacheTempFileStore(GradleUserHomeDirProvider provider) {
+                File gradleUserHomeDirectory = provider.getGradleUserHomeDirectory();
+                return BuildCacheTempFileStore.in(gradleUserHomeDirectory);
+            }
+        });
     }
 
-    BuildCacheServiceRegistration createDirectoryBuildCacheServiceRegistration() {
-        return new DefaultBuildCacheServiceRegistration(DirectoryBuildCache.class, DirectoryBuildCacheServiceFactory.class);
+    @Override
+    public void registerBuildServices(ServiceRegistration registration) {
+        registration.addProvider(new Object() {
+
+            BuildCacheConfigurationInternal createBuildCacheConfiguration(
+                Instantiator instantiator,
+                List<BuildCacheServiceRegistration> allBuildCacheServiceFactories
+            ) {
+                return instantiator.newInstance(DefaultBuildCacheConfiguration.class, instantiator, allBuildCacheServiceFactories);
+            }
+
+            BuildCacheServiceRegistration createDirectoryBuildCacheServiceRegistration() {
+                return new DefaultBuildCacheServiceRegistration(DirectoryBuildCache.class, DirectoryBuildCacheServiceFactory.class);
+            }
+
+        });
     }
 
 }

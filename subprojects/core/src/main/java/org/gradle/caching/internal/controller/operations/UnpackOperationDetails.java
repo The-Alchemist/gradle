@@ -16,13 +16,26 @@
 
 package org.gradle.caching.internal.controller.operations;
 
-import org.gradle.caching.internal.operations.BuildCacheRemoteStoreBuildOperationType;
+import org.gradle.caching.BuildCacheKey;
+import org.gradle.caching.internal.operations.BuildCacheArchiveUnpackBuildOperationType;
 
-public class StoreOperationResult implements BuildCacheRemoteStoreBuildOperationType.Result {
+public class UnpackOperationDetails implements BuildCacheArchiveUnpackBuildOperationType.Details {
 
-    public static final BuildCacheRemoteStoreBuildOperationType.Result INSTANCE = new StoreOperationResult();
+    private final BuildCacheKey key;
+    private final long archiveSize;
 
-    private StoreOperationResult() {
+    public UnpackOperationDetails(BuildCacheKey key, long archiveSize) {
+        this.key = key;
+        this.archiveSize = archiveSize;
     }
 
+    @Override
+    public String getCacheKey() {
+        return key.getHashCode();
+    }
+
+    @Override
+    public long getArchiveSize() {
+        return archiveSize;
+    }
 }

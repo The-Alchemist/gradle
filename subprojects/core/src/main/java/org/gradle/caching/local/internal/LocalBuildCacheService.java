@@ -14,15 +14,20 @@
  * limitations under the License.
  */
 
-package org.gradle.caching.internal.controller.operations;
+package org.gradle.caching.local.internal;
 
-import org.gradle.caching.internal.operations.BuildCacheRemoteStoreBuildOperationType;
+import org.gradle.api.Action;
+import org.gradle.caching.BuildCacheKey;
 
-public class StoreOperationResult implements BuildCacheRemoteStoreBuildOperationType.Result {
+import java.io.Closeable;
+import java.io.File;
 
-    public static final BuildCacheRemoteStoreBuildOperationType.Result INSTANCE = new StoreOperationResult();
+public interface LocalBuildCacheService extends Closeable {
 
-    private StoreOperationResult() {
-    }
+    void store(BuildCacheKey key, File file);
 
+    void load(BuildCacheKey key, Action<? super File> reader);
+
+    @Override
+    void close();
 }
